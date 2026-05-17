@@ -328,7 +328,7 @@ public class UserInterface {
                     contract.getMonthlyPayment());
 
         } else {
-            System.out.println("  Invalid option. Enter S or L.");
+            System.out.println("  Invalid option. Enter S or L. ");
             return;
         }
 
