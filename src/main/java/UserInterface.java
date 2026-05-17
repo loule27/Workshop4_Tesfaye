@@ -242,7 +242,6 @@ public class UserInterface {
     }
 
     private void processSellLeaseVehicleRequest() {
-        // Step 1 — find the vehicle by VIN
         int vin = getValidInt("  Enter VIN of vehicle to sell/lease: ");
 
         Vehicle selected = null;
@@ -261,13 +260,12 @@ public class UserInterface {
         System.out.println("\n  Vehicle found:");
         System.out.println("  " + selected);
 
-        // Step 2 — collect customer info
         System.out.print("\n  Customer name: ");
         String customerName = kb.nextLine().trim();
         System.out.print("  Customer email: ");
         String customerEmail = kb.nextLine().trim();
 
-        // Step 3 — sale or lease?
+
         System.out.print("  Sale or Lease? (S/L): ");
         String contractType = kb.nextLine().trim().toUpperCase();
 
@@ -334,7 +332,7 @@ public class UserInterface {
             return;
         }
 
-        // Step 4 — save contract and remove vehicle from inventory
+
         ContractFileManager.saveContract(contract);
         dealership.removeVehicle(selected);
         DealershipFileManager.saveDealership(dealership);

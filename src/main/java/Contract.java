@@ -37,7 +37,7 @@ public abstract class Contract {
         this.vehicleSold = vehicleSold;
     }
 
-    // No body — children must provide their own implementation
+
     public abstract double getTotalPrice();
     public abstract double getMonthlyPayment();
 }
