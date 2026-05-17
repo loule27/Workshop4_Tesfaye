@@ -27,6 +27,7 @@ public class UserInterface {
             System.out.println("║  7  - View all vehicles                  ║");
             System.out.println("║  8  - Add a vehicle                      ║");
             System.out.println("║  9  - Remove a vehicle                   ║");
+            System.out.println("║  10 - Sell / Lease a vehicle             ║");
             System.out.println("║  99 - Exit                               ║");
             System.out.println("╚══════════════════════════════════════════╝");
             System.out.print("Enter option: ");
@@ -51,6 +52,8 @@ public class UserInterface {
                 case "8":  processAddVehicleRequest();
                 break;
                 case "9":  processRemoveVehicleRequest();
+                break;
+                case "10": processSellLeaseVehicleRequest();
                 break;
                 case "99":
                     System.out.println("Goodbye!");
@@ -236,5 +239,106 @@ public class UserInterface {
         } else {
             System.out.println("  Remove cancelled.");
         }
+    }
+
+    private void processSellLeaseVehicleRequest() {
+        // Step 1 — find the vehicle by VIN
+        int vin = getValidInt("  Enter VIN of vehicle to sell/lease: ");
+
+        Vehicle selected = null;
+        for (Vehicle v : dealership.getAllVehicles()) {
+            if (v.getVin() == vin) {
+                selected = v;
+                break;
+            }
+        }
+
+        if (selected == null) {
+            System.out.println("  No vehicle found with VIN: " + vin);
+            return;
+        }
+
+        System.out.println("\n  Vehicle found:");
+        System.out.println("  " + selected);
+
+        // Step 2 — collect customer info
+        System.out.print("\n  Customer name: ");
+        String customerName = kb.nextLine().trim();
+        System.out.print("  Customer email: ");
+        String customerEmail = kb.nextLine().trim();
+
+        // Step 3 — sale or lease?
+        System.out.print("  Sale or Lease? (S/L): ");
+        String contractType = kb.nextLine().trim().toUpperCase();
+
+        // Can't lease a vehicle over 3 years old
+        int currentYear = java.time.LocalDate.now().getYear();
+        int vehicleAge  = currentYear - selected.getYear();
+
+        if (contractType.equals("L") && vehicleAge > 3) {
+            System.out.println("  Cannot lease a vehicle over 3 years old.");
+            return;
+        }
+
+        String date = java.time.LocalDate.now()
+                .format(java.time.format.DateTimeFormatter
+                        .ofPattern("yyyyMMdd"));
+
+        Contract contract;
+
+        if (contractType.equals("S")) {
+            System.out.print("  Finance the vehicle? (yes/no): ");
+            String financeInput = kb.nextLine().trim().toLowerCase();
+            boolean finance = financeInput.equals("yes");
+
+            contract = new SalesContract(date, customerName,
+                    customerEmail, selected, finance);
+
+            System.out.printf("%n  --- Sale Summary ---%n");
+            System.out.printf("  Vehicle Price:   $%.2f%n",
+                    selected.getPrice());
+            System.out.printf("  Sales Tax:       $%.2f%n",
+                    ((SalesContract) contract).getSalesTaxAmount());
+            System.out.printf("  Recording Fee:   $%.2f%n",
+                    ((SalesContract) contract).getRecordingFee());
+            System.out.printf("  Processing Fee:  $%.2f%n",
+                    ((SalesContract) contract).getProcessingFee());
+            System.out.printf("  Total Price:     $%.2f%n",
+                    contract.getTotalPrice());
+
+            if (finance) {
+                System.out.printf("  Monthly Payment: $%.2f%n",
+                        contract.getMonthlyPayment());
+            } else {
+                System.out.println("  Payment: Cash / No financing");
+            }
+
+        } else if (contractType.equals("L")) {
+            contract = new LeaseContract(date, customerName,
+                    customerEmail, selected);
+
+            System.out.printf("%n  --- Lease Summary ---%n");
+            System.out.printf("  Vehicle Price:        $%.2f%n",
+                    selected.getPrice());
+            System.out.printf("  Expected Ending Value:$%.2f%n",
+                    ((LeaseContract) contract).getExpectedEndingValue());
+            System.out.printf("  Lease Fee:            $%.2f%n",
+                    ((LeaseContract) contract).getLeaseFee());
+            System.out.printf("  Total Lease Cost:     $%.2f%n",
+                    contract.getTotalPrice());
+            System.out.printf("  Monthly Payment:      $%.2f%n",
+                    contract.getMonthlyPayment());
+
+        } else {
+            System.out.println("  Invalid option. Enter S or L.");
+            return;
+        }
+
+        // Step 4 — save contract and remove vehicle from inventory
+        ContractFileManager.saveContract(contract);
+        dealership.removeVehicle(selected);
+        DealershipFileManager.saveDealership(dealership);
+
+        System.out.println("\n  Contract saved. Vehicle removed from inventory.");
     }
 }
